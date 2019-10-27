@@ -20,7 +20,7 @@ export default {
     ...mapMutations('global', ['setIsConnected']),
     ...mapActions('auth', ['authorizeByCookies']),
     async authorize() {
-      if (this.isConnected && !this.isAuthorized) {
+      if (!this.isLoading && this.isConnected && !this.isAuthorized) {
         await this.authorizeByCookies();
       }
     }
@@ -36,8 +36,6 @@ export default {
     '$route': 'authorize'
   },
   async created() {
-    this.setIsConnected(navigator.onLine);
-
     window.addEventListener('offline', () => { this.setIsConnected(navigator.onLine) });
     window.addEventListener('online', () => { this.setIsConnected(navigator.onLine) });
 

@@ -1,24 +1,12 @@
-import store from 'src/store';
-
 const routes = [
   {
     path: '/',
     component: () => import('layouts/Main.vue'),
     children: [
-      { path: '', component: () => import('pages/Index.vue') }
+      { path: 'index', component: () => import('pages/Index.vue') }
     ],
-    beforeEnter: (to, from, next) => {
-      if (!navigator.onLine) {
-        next('connection');
-        return;
-      }
-
-      if (!store.state.auth.isAuthorized) {
-        next('login');
-        return;
-      }
-
-      next();
+    meta: {
+      requiresAuth: true
     }
   },
   {
@@ -26,20 +14,7 @@ const routes = [
     component: () => import('layouts/Guest.vue'),
     children: [
       { path: 'login', component: () => import('pages/Login.vue') }
-    ],
-    beforeEnter: (to, from, next) => {
-      if (!navigator.onLine) {
-        next('connection');
-        return;
-      }
-
-      if (store.state.auth.isAuthorized) {
-        next('/');
-        return;
-      }
-
-      next();
-    }
+    ]
   },
   {
     path: '/',
@@ -48,24 +23,18 @@ const routes = [
       { path: '404', component: () => import('pages/Error404.vue')},
       {
         path: 'connection',
-        component: () => import('pages/ConnectionError.vue'),
-        beforeEnter: (to, from, next) => {
-          console.log('before enter');
-          if (navigator.onLine) {
-            next('/')
-            return;
-          }
-
-          next();
-        }}
+        component: () => import('pages/ConnectionError.vue')
+      }
     ]
   },
   {
     path: '*',
     redirect: '404'
+  },
+  {
+    path: '/',
+    redirect: 'index'
   }
-]
-
-routes.push();
+];
 
 export default routes;

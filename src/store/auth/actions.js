@@ -63,8 +63,11 @@ export async function authorizeByCookies ({ commit, rootState }) {
   if (!credentials || !state) {
     return false;
   }
+
   let currentUser = null;
   try {
+    commit('global/toggleLoading', true, { root: true });
+
     const ig = InstagramApi.getInstance();
     await ig.state.deserializeCookieJar(JSON.stringify(credentials));
 
