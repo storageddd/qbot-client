@@ -1,5 +1,5 @@
 export default {
   isAuthorized: false,
-  loggedInUser: null,
+  currentUser: null,
   errorMessage: null
 }

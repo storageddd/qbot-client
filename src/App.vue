@@ -1,6 +1,5 @@
 <template>
   <div id="q-app">
-    isConnected: {{ isConnected }}
     <q-inner-loading :showing="isLoading">
       <q-spinner-ball size="50px" color="primary"></q-spinner-ball>
     </q-inner-loading>
@@ -14,11 +13,27 @@ import { mapGetters, mapMutations, mapActions } from 'vuex';
 export default {
   name: 'App',
   computed: {
-    ...mapGetters('global', ['isLoading', 'isConnected'])
+    ...mapGetters('global', ['isLoading', 'isConnected']),
+    ...mapGetters('auth', ['isAuthorized'])
   },
   methods: {
-    ...mapMutations('global', ['setIsConnected', 'setIsLoading']),
-    ...mapActions('auth', ['authorize'])
+    ...mapMutations('global', ['setIsConnected']),
+    ...mapActions('auth', ['authorizeByCookies']),
+    async authorize() {
+      if (this.isConnected && !this.isAuthorized) {
+        await this.authorizeByCookies();
+      }
+    }
+  },
+  watch: {
+    isAuthorized(value) {
+      if (value) {
+        this.$router.push('/');
+      } else {
+        this.$router.push('/login');
+      }
+    },
+    '$route': 'authorize'
   },
   async created() {
     this.setIsConnected(navigator.onLine);
@@ -26,12 +41,7 @@ export default {
     window.addEventListener('offline', () => { this.setIsConnected(navigator.onLine) });
     window.addEventListener('online', () => { this.setIsConnected(navigator.onLine) });
 
-    this.setIsLoading(true);
-    const result = await this.authorize();
-    if (result) {
-      this.$router.push({ path: '/' });
-    }
-    this.setIsLoading(false);
+    await this.authorizeByCookies();
   }
 }
 </script>

@@ -2,8 +2,8 @@ export function isAuthorized (state) {
   return state.isAuthorized;
 }
 
-export function loggedInUser (state) {
-  return state.loggedInUser;
+export function currentUser (state) {
+  return state.currentUser;
 }
 
 export function errorMessage(state) {

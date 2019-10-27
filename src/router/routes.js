@@ -9,12 +9,12 @@ const routes = [
     ],
     beforeEnter: (to, from, next) => {
       if (!navigator.onLine) {
-        next('/connection');
+        next('connection');
         return;
       }
 
       if (!store.state.auth.isAuthorized) {
-        next('/login');
+        next('login');
         return;
       }
 
@@ -25,11 +25,11 @@ const routes = [
     path: '/',
     component: () => import('layouts/Guest.vue'),
     children: [
-      { path: '/login', component: () => import('pages/Login.vue') }
+      { path: 'login', component: () => import('pages/Login.vue') }
     ],
     beforeEnter: (to, from, next) => {
       if (!navigator.onLine) {
-        next('/connection');
+        next('connection');
         return;
       }
 
@@ -50,6 +50,7 @@ const routes = [
         path: 'connection',
         component: () => import('pages/ConnectionError.vue'),
         beforeEnter: (to, from, next) => {
+          console.log('before enter');
           if (navigator.onLine) {
             next('/')
             return;
@@ -61,7 +62,7 @@ const routes = [
   },
   {
     path: '*',
-    redirect: '/404'
+    redirect: '404'
   }
 ]
 

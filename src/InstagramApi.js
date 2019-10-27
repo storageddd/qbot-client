@@ -20,10 +20,6 @@ class InstagramApi {
     return InstagramApi._instance;
   }
 
-  static destroy() {
-    InstagramApi._instance = null;
-  }
-
 }
 
 export default InstagramApi;

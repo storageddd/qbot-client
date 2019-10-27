@@ -1,91 +1,109 @@
+// @see PassportJS
 import InstagramApi from 'src/InstagramApi';
-import { LocalStorage } from 'quasar'
+import { Cookies } from 'quasar';
 
-const LOCAL_STORAGE_CREDENTIALS_KEY = 'CREDENTIALS';
+const COOKIES_CREDENTIALS_KEY = 'qbot-credentials';
+const COOKIES_STATE_KEY = 'qbot-state';
 
+/**
+ * @param commit
+ * @param rootState
+ * @param userName
+ * @param password
+ * @returns {Promise<boolean>}
+ */
 export async function authorizeByCredentials ({ commit, rootState }, { userName, password }) {
   if (!rootState.global.isConnected) {
-    commit('authorizeError', 'Отсутствует соединение с интернетом.');
+    commit('authorizeError', 'Отсутствует подключение к интернету.');
     return false;
   }
 
-  InstagramApi.getInstance().state.generateDevice(userName);
-  let loggedInUser = null;
-
+  const ig = InstagramApi.getInstance();
+  ig.state.generateDevice(userName);
+  let currentUser = null;
   try {
-    await InstagramApi.getInstance().simulate.preLoginFlow();
-    loggedInUser = await InstagramApi.getInstance().account.login(userName, password);
-    await process.nextTick(async () => await InstagramApi.getInstance().simulate.postLoginFlow());
+    commit('global/toggleLoading', true, { root: true });
+    await ig.simulate.preLoginFlow();
+    currentUser = await ig.account.login(userName, password);
+    await process.nextTick(async () => await ig.simulate.postLoginFlow());
   } catch (e) {
     commit('authorizeError', 'Ошибка авторизации. Проверьте данные для входа.');
+    commit('global/toggleLoading', false, { root: true });
     return false;
   }
-  console.log('---');
-  console.log(loggedInUser);
-  console.log(InstagramApi.getInstance());
-  console.log('---');
-  commit('authorize', loggedInUser);
-  LocalStorage.set(LOCAL_STORAGE_CREDENTIALS_KEY, { userName, password });
+  const credentials = await ig.state.serializeCookieJar();
+  const state = {
+    deviceString: ig.state.deviceString,
+    deviceId: ig.state.deviceId,
+    uuid: ig.state.uuid,
+    phoneId: ig.state.phoneId,
+    adid: ig.state.adid,
+    build: ig.state.build,
+  };
+  Cookies.set(COOKIES_CREDENTIALS_KEY, credentials);
+  Cookies.set(COOKIES_STATE_KEY, state);
+  commit('authorize', currentUser);
+  commit('global/toggleLoading', false, { root: true });
   return true;
 }
 
-export async function authorize ({ commit, rootState }) {
+/**
+ * @param commit
+ * @param rootState
+ * @returns {Promise<boolean>}
+ */
+export async function authorizeByCookies ({ commit, rootState }) {
   if (!rootState.global.isConnected) {
-    commit('authorizeError', 'Отсутствует соединение с интернетом.');
+    commit('authorizeError', 'Отсутствует подключение к интернету.');
     return false;
   }
 
-  const credentials = LocalStorage.getItem(LOCAL_STORAGE_CREDENTIALS_KEY);
-  if (!credentials) {
+  const credentials = Cookies.get(COOKIES_CREDENTIALS_KEY);
+  const state = Cookies.get(COOKIES_STATE_KEY);
+  if (!credentials || !state) {
     return false;
   }
-
-  const { userName, password } = credentials;
-
-  InstagramApi.getInstance().state.generateDevice(userName);
-
-  let loggedInUser = null;
+  let currentUser = null;
   try {
-    await InstagramApi.getInstance().simulate.preLoginFlow();
-    loggedInUser = await InstagramApi.getInstance().account.login(userName, password);
-    await process.nextTick(async () => await InstagramApi.getInstance().simulate.postLoginFlow());
+    const ig = InstagramApi.getInstance();
+    await ig.state.deserializeCookieJar(JSON.stringify(credentials));
+
+    ig.state.deviceString = state.deviceString;
+    ig.state.deviceId = state.deviceId;
+    ig.state.uuid = state.uuid;
+    ig.state.phoneId = state.phoneId;
+    ig.state.adid = state.adid;
+    ig.state.build = state.build;
+
+    currentUser = await ig.account.currentUser();
   } catch (e) {
     commit('authorizeError', 'Ошибка авторизации. Проверьте данные для входа.');
+    commit('global/toggleLoading', false, { root: true });
+    return false;
+  }
+  commit('authorize', currentUser);
+  commit('global/toggleLoading', false, { root: true });
+  return true;
+}
+
+/**
+ * @param commit
+ * @returns {Promise<boolean>}
+ */
+export async function unauthorize ({ commit }) {
+  try {
+    commit('global/toggleLoading', true, { root: true });
+    await InstagramApi.getInstance().account.logout();
+  } catch (e) {
+    console.log(e);
+    commit('authorizeError', 'Ошибка авторизации.');
+    commit('global/toggleLoading', false, { root: true });
     return false;
   }
 
-  commit('authorize', loggedInUser);
-  console.log('---');
-  console.log(loggedInUser);
-  console.log(InstagramApi.getInstance());
-  console.log('---');
-  LocalStorage.set(LOCAL_STORAGE_CREDENTIALS_KEY, { userName, password });
-  return true;
-}
-
-export function unauthorize ({ commit }) {
-  LocalStorage.remove(LOCAL_STORAGE_CREDENTIALS_KEY);
-  InstagramApi.destroy();
+  Cookies.remove(COOKIES_CREDENTIALS_KEY);
+  Cookies.remove(COOKIES_STATE_KEY);
   commit('unauthorize');
+  commit('global/toggleLoading', false, { root: true });
   return true;
 }
-
-// function x() {
-//   const ig = new IgApiClient();
-//   ig.state.deviceString = "saved deviceString";
-//   ig.state.deviceId = "saved deviceId";
-//   ig.state.uuid = "saved uuid";
-//   ig.state.phoneId = "saved phoneId";
-//   ig.state.adid = "saved adid";
-//   ig.state.build = "saved build";
-//   await ig.state.deserializeCookieJar(JSON.stringify(cookies));
-// }
-
-
-// account contactPointPrefill, currentUser https://github.com/dilame/instagram-private-api/blob/master/docs/classes/_repositories_account_repository_.accountrepository.md
-// qe sync syncLoginExperiments https://github.com/dilame/instagram-private-api/blob/master/docs/classes/_repositories_qe_repository_.qerepository.md#sync
-// qp batchFetch https://github.com/dilame/instagram-private-api/blob/master/docs/classes/_repositories_qp_repository_.qprepository.md#batchfetch
-
-// @see https://habr.com/ru/post/310594/
-
-// @see passportjs
