@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hHh Lpr fFf">
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -8,11 +8,11 @@
 
 <script>
 export default {
-  name: 'MyLayout',
+  name: 'GuestLayout',
 
   data () {
     return {
-      leftDrawerOpen: false
+      leftDrawer: true
     }
   }
 }

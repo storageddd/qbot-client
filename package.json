@@ -7,18 +7,26 @@
   "author": "storaged <storaged@mail.ru>",
   "private": true,
   "scripts": {
+    "dev-electron": "quasar dev -m electron",
     "lint": "eslint --ext .js,.vue src",
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
     "axios": "^0.18.1",
+    "instagram-private-api": "^1.32.0",
+    "install": "^0.13.0",
+    "npm": "^6.12.0",
     "quasar": "^1.0.0"
   },
   "devDependencies": {
     "@quasar/app": "^1.0.0",
     "@vue/eslint-config-standard": "^4.0.0",
     "babel-eslint": "^10.0.1",
+    "devtron": "^1.4.0",
+    "electron": "^5.0.11",
+    "electron-debug": "^3.0.1",
+    "electron-devtools-installer": "^2.2.4",
     "eslint": "^5.10.0",
     "eslint-loader": "^2.1.1",
     "eslint-plugin-vue": "^5.0.0"
